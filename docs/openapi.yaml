@@ -1,0 +1,298 @@
+openapi: 3.0.3
+info:
+  title: ORY Kratos User Management API (GoFiber)
+  version: 1.0.0
+  description: |
+    Dokumentasi lengkap seluruh endpoint user management, self-service flow, dan webhook pada sistem yang di-rebuild dengan GoFiber. Semua contoh dan penjelasan dalam Bahasa Indonesia.
+servers:
+  - url: http://localhost:3001
+paths:
+  /register:
+    post:
+      summary: Register user baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@email.com
+                password:
+                  type: string
+                  example: rahasia123
+      responses:
+        '200':
+          description: Register berhasil (flow response)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowResponse'
+  /login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@email.com
+                password:
+                  type: string
+                  example: rahasia123
+      responses:
+        '200':
+          description: Login berhasil (JWT dan flow response)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowResponse'
+  /request-verification:
+    post:
+      summary: Request kode verifikasi email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@email.com
+      responses:
+        '200':
+          description: Kode verifikasi dikirim (simulasi/log)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowResponse'
+  /verify-email:
+    post:
+      summary: Verifikasi email dengan kode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@email.com
+                code:
+                  type: string
+                  example: '123456'
+      responses:
+        '200':
+          description: Verifikasi berhasil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowResponse'
+  /request-password-recovery:
+    post:
+      summary: Request kode recovery password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@email.com
+      responses:
+        '200':
+          description: Kode recovery dikirim (simulasi/log)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowResponse'
+  /reset-password:
+    post:
+      summary: Reset password dengan kode recovery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@email.com
+                code:
+                  type: string
+                  example: '654321'
+                new_password:
+                  type: string
+                  example: rahasiaBaru
+      responses:
+        '200':
+          description: Password berhasil direset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowResponse'
+  /logout:
+    post:
+      summary: Logout user (pseudo, client-side)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /profile:
+    get:
+      summary: Get profile user (email, status, dsb)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Data profil user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      summary: Update profile user (email, status)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Profil berhasil diupdate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /profile/custom:
+    get:
+      summary: Get custom attributes user (identity schema)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Custom attributes JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  custom_attributes:
+                    type: object
+    put:
+      summary: Update custom attributes user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Custom attributes berhasil diupdate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  custom_attributes:
+                    type: object
+  /webhook:
+    post:
+      summary: Contoh payload webhook event
+      description: |
+        Endpoint ini hanya untuk dokumentasi contoh payload webhook yang akan diterima oleh sistem eksternal.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookPayload'
+      responses:
+        '200':
+          description: OK
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    FlowResponse:
+      type: object
+      properties:
+        flow_id:
+          type: string
+        state:
+          type: string
+          enum: [started, challenge, success, failed]
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+        next_action:
+          type: string
+        data:
+          type: object
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+        is_email_verified:
+          type: boolean
+        last_login:
+          type: integer
+        created_at:
+          type: integer
+        updated_at:
+          type: integer
+        custom_attributes:
+          type: object
+    WebhookPayload:
+      type: object
+      properties:
+        event:
+          type: string
+          example: register
+        data:
+          type: object
+        timestamp:
+          type: integer
+          example: 1721060191000
